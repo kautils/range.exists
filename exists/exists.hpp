@@ -101,6 +101,8 @@ int tmain_kautil_range_exsits_interface() {
                  ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
                 +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
         };
+        
+        // conditions 'is_exact' can not be contained inside is_contained because there are different between i0 and i1. 
         auto i0_is_exact = [](auto const& i0)->bool{ return (!i0.direction)& !bool(i0.nearest_pos%(sizeof(value_type)*2)); };
         auto i1_is_exact = [](auto const& i1)->bool{ return (!i1.direction)&  bool(i1.nearest_pos%(sizeof(value_type)*2)); };
         auto is_contained = [](auto const& in)->bool{
