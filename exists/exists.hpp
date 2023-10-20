@@ -75,13 +75,13 @@ struct exists{
     ~exists(){}
     
     bool exec(value_type from, value_type to){
-        auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
-            /* (np-diff <= input <= np) or (np <= input <= np+diff)
-             then adjust */
-            return 
-                 ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
-                +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
-        };
+//        auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
+//            /* (np-diff <= input <= np) or (np <= input <= np+diff)
+//             then adjust */
+//            return 
+//                 ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
+//                +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
+//        };
         
         auto i0_is_exact = [](auto const& i0)->bool{ return (!i0.direction)& !bool(i0.nearest_pos%(sizeof(value_type)*2)); };
         auto i1_is_exact = [](auto const& i1)->bool{ return (!i1.direction)&  bool(i1.nearest_pos%(sizeof(value_type)*2)); };
@@ -100,26 +100,21 @@ struct exists{
         auto i0 = bt.search(from,false);
         auto i1 = bt.search(to,false);
         
-        {
-            // if adjust then direction is 0. 
-            auto i0_is_adjust =is_adjust_diff(i0,from,diff); 
-            i0.direction *= !i0_is_adjust;
-            from=
-                 !i0_is_adjust*from
-                +i0_is_adjust*i0.nearest_value;
-            
-            auto i1_is_adjust =is_adjust_diff(i1,to,diff); 
-            i1.direction *= !is_adjust_diff(i1,to,diff);
-            to = 
-                 !i1_is_adjust*to
-                +i1_is_adjust*i1.nearest_value;
-        }
+//        {
+//            // if adjust then direction is 0. 
+//            auto i0_is_adjust =is_adjust_diff(i0,from,diff); 
+//            i0.direction *= !i0_is_adjust;
+//            from=
+//                 !i0_is_adjust*from
+//                +i0_is_adjust*i0.nearest_value;
+//            
+//            auto i1_is_adjust =is_adjust_diff(i1,to,diff); 
+//            i1.direction *= !is_adjust_diff(i1,to,diff);
+//            to = 
+//                 !i1_is_adjust*to
+//                +i1_is_adjust*i1.nearest_value;
+//        }
 
-        
-        auto a = is_contained(i0);
-        auto b = i0_is_exact(i0);
-        
-        
         auto i0_is_contained = !i0.nan*(is_contained(i0)|i0_is_exact(i0));
         auto i1_is_contained = !i1.nan*(is_contained(i1)|i1_is_exact(i1));
         auto contained = ((from==to)&i0_is_contained)|(i0_is_contained&i1_is_contained);
@@ -170,35 +165,48 @@ int tmain_kautil_range_exsits_interface() {
         auto max = data.back();
         srand((uintptr_t)&pref);
         
-        // todo : consider nan
-        
-        
             auto diff = 1;
 //            point
-            auto from=value_type{0},to=value_type{0}; // expect false
+//            auto from=value_type{0},to=value_type{0}; // expect false
 //            auto from=value_type{8},to=value_type{11}; // expect false
-//            auto from=value_type{9},to=value_type{11}; // expect true
+//            auto from=value_type{1001},to=value_type{1001}; // expect false
+//            auto from=value_type{9},to=value_type{11}; // expect false
+//            auto from=value_type{991},to=value_type{991}; // expect true
+//            auto from=value_type{999},to=value_type{999}; // expect true
+//            auto from=value_type{15},to=value_type{15}; // expect true
         
+
+//            one block 
+//            auto from = value_type{0},to = value_type{8}; //expect false
+//            auto from = value_type{0},to = value_type{10}; //expect false
+//            auto from = value_type{0},to = value_type{11}; //expect false
+//            auto from = value_type{0},to = value_type{15}; //expect false
+//            auto from = value_type{0},to = value_type{19}; //expect false
+//            auto from = value_type{0},to = value_type{20}; //expect false
+//            auto from = value_type{10},to = value_type{20};  //expect true
+//            auto from = value_type{11},to = value_type{15};  //expect true
+            auto from = value_type{9},to = value_type{15};  //expect true
+//            auto from = value_type{9},to = value_type{21};  //expect true
+                
 //            two block
 //            auto from=value_type{0},to=value_type{30}; // expect false
 //            auto from=value_type{5},to=value_type{30}; // expect false
 //            auto from=value_type{9},to=value_type{30}; // expect false
+//            auto from=value_type{9},to=value_type{45}; // expect false
+//            auto from=value_type{25},to=value_type{65}; // expect false
         
 //            three block
 //            auto from=value_type{0},to=value_type{50}; // expect false
 //            auto from=value_type{5},to=value_type{50}; // expect false
 //            auto from=value_type{9},to=value_type{50}; // expect false
+//            auto from=value_type{19},to=value_type{60}; // expect false
+//            auto from=value_type{19},to=value_type{65}; // expect false
+//            auto from=value_type{24},to=value_type{65}; // expect false
             
-        
-//            auto from=value_type{11},to=value_type{19}; // expect true
+//           overflow 
 //            auto from=value_type{0},to=value_type{5}; // expect false
-//            auto from=value_type{10},to=value_type{10}; // expect true
-//            auto from=value_type{20},to=value_type{30}; // expect false
-//            auto from=value_type{31},to=value_type{35}; // expect true
-//            auto from=value_type{30},to=value_type{40}; // expect true
-//            auto from=value_type{45},to=value_type{46}; // expect false
-//            auto from=value_type{990},to=value_type{1000}; // expect true
 //            auto from=value_type{1000},to=value_type{1010}; // expect false
+
             auto ext = kautil::range::exists{&pref};
             ext.set_diff(diff);
             auto res = ext.exec(from,to);
