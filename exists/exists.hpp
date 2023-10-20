@@ -59,8 +59,84 @@ using file_syscall_16b_f_pref= file_syscall_premitive<double>;
 
 
 #include "kautil/algorithm/btree_search/btree_search.hpp"
-
 #include <set>
+
+
+
+namespace kautil{
+namespace range{
+
+template<typename preference_t>
+struct exists{
+    using value_type = typename preference_t::value_type;
+    using offset_type = typename preference_t::offset_type;
+    
+    exists(preference_t * pref) : pref(pref){}
+    ~exists(){}
+    
+    bool exec(value_type from, value_type to){
+        auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
+            /* (np-diff <= input <= np) or (np <= input <= np+diff)
+             then adjust */
+            return 
+                 ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
+                +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
+        };
+        
+        auto i0_is_exact = [](auto const& i0)->bool{ return (!i0.direction)& !bool(i0.nearest_pos%(sizeof(value_type)*2)); };
+        auto i1_is_exact = [](auto const& i1)->bool{ return (!i1.direction)&  bool(i1.nearest_pos%(sizeof(value_type)*2)); };
+        auto is_contained = [](auto const& in)->bool{
+            // conditions 'is_exact' can not be contained inside is_contained because there are different between i0 and i1. 
+            return
+               (bool(in.nearest_pos%(sizeof(value_type)*2))&(in.direction<0)) 
+             | (!bool(in.nearest_pos%(sizeof(value_type)*2)))&(in.direction>0);
+        };
+
+        // todo : consider nan
+        auto bt = kautil::algorithm::btree_search{pref};
+            // there are 4 patterns (exact(2)) * (contained(2))
+                //exact
+                //contained
+        auto i0 = bt.search(from,false);
+        auto i1 = bt.search(to,false);
+        
+        {
+            // if adjust then direction is 0. 
+            auto i0_is_adjust =is_adjust_diff(i0,from,diff); 
+            i0.direction *= !i0_is_adjust;
+            from=
+                 !i0_is_adjust*from
+                +i0_is_adjust*i0.nearest_value;
+            
+            auto i1_is_adjust =is_adjust_diff(i1,to,diff); 
+            i1.direction *= !is_adjust_diff(i1,to,diff);
+            to = 
+                 !i1_is_adjust*to
+                +i1_is_adjust*i1.nearest_value;
+        }
+    
+        auto test0 = is_contained(i0);
+        auto test1 = is_contained(i1);
+        
+        auto contained = (is_contained(i0)|i0_is_exact(i0)) & (is_contained(i1)|i1_is_exact(i1));
+        auto size_check = (sizeof(value_type)<=(-i0.nearest_pos+i1.nearest_pos));
+        return contained&size_check; 
+    }
+    
+    void set_diff(value_type v){ diff = v; }
+    
+private:
+    uint64_t diff = 1;
+    preference_t * pref = nullptr;
+    
+};
+
+
+
+} //namespace range{
+} //namespace kautil{
+
+
 
 int tmain_kautil_range_exsits_interface() {
     
@@ -73,8 +149,6 @@ int tmain_kautil_range_exsits_interface() {
              data.push_back(data.back()+step);
         }
     }
-    
-    
     
     auto f_ranges = fopen("tmain_kautil_range_exsits_interface.cache","w+b");
     auto written = fwrite(data.data(),sizeof(value_type),data.size(),f_ranges);
@@ -92,31 +166,18 @@ int tmain_kautil_range_exsits_interface() {
         auto max = data.back();
         srand((uintptr_t)&pref);
         
-        auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
-            /*
-             (np-diff <= input <= np) or (np <= input <= np+diff)
-             then adjust 
-             */
-            return 
-                 ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
-                +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
-        };
-        
-        // conditions 'is_exact' can not be contained inside is_contained because there are different between i0 and i1. 
-        auto i0_is_exact = [](auto const& i0)->bool{ return (!i0.direction)& !bool(i0.nearest_pos%(sizeof(value_type)*2)); };
-        auto i1_is_exact = [](auto const& i1)->bool{ return (!i1.direction)&  bool(i1.nearest_pos%(sizeof(value_type)*2)); };
-        auto is_contained = [](auto const& in)->bool{
-            return
-               (bool(in.nearest_pos%(sizeof(value_type)*2))&(in.direction<0)) 
-             | (!bool(in.nearest_pos%(sizeof(value_type)*2)))&(in.direction>0);
-        };
-
-                    
 //        for(auto i = 0; i < 1000; ++i){
         // todo : consider nan
             auto diff = 1;
-            auto from=value_type{12},to=value_type{20}; // expect true
-            
+            //auto from=value_type{11},to=value_type{19}; // expect true
+            //auto from=value_type{0},to=value_type{5}; // expect false
+            //auto from=value_type{20},to=value_type{30}; // expect false
+            auto from=value_type{31},to=value_type{35}; // expect false
+            //auto from=value_type{30},to=value_type{40}; // expect false
+            //auto from=value_type{1000},to=value_type{1010}; // expect false
+            auto ext = kautil::range::exists{&pref};
+            ext.set_diff(diff);
+            auto res = ext.exec(from,to);
             
 //            from = (rand()%max+min)/step*step;
 //            to = (rand()%max+min)/step*step;
@@ -125,33 +186,6 @@ int tmain_kautil_range_exsits_interface() {
                 //contained
             auto i0 = bt.search(from,false);
             auto i1 = bt.search(to,false);
-        
-            
-            {
-                // if adjust then direction is 0. 
-                auto i0_is_adjust =is_adjust_diff(i0,from,diff); 
-                i0.direction *= !i0_is_adjust;
-                from=
-                     !i0_is_adjust*from
-                    +i0_is_adjust*i0.nearest_value;
-                
-                auto i1_is_adjust =is_adjust_diff(i1,to,diff); 
-                i1.direction *= !is_adjust_diff(i1,to,diff);
-                to = 
-                     !i1_is_adjust*to
-                    +i1_is_adjust*i1.nearest_value;
-            }
-        
-            auto test0 = is_contained(i0);
-            auto test1 = is_contained(i1);
-            
-            auto contained = (is_contained(i0)|i0_is_exact(i0)) & (is_contained(i1)|i1_is_exact(i1));
-            auto size_check = (sizeof(value_type)<=(-i0.nearest_pos+i1.nearest_pos));
-            auto res = contained&size_check; 
-        
-            auto i0_check_buf = value_type(0);
-            auto i1_check_buf = value_type(0);
-            auto i_buf_ptr = &i0_check_buf;
         
             struct check_st{ 
                 value_type v;offset_type pos; 
@@ -187,7 +221,6 @@ int tmain_kautil_range_exsits_interface() {
                 fflush(stdout);
             }
             
-            
             auto cur = check.begin();
             auto e = check.end();
             auto check_res = false;
@@ -212,14 +245,11 @@ int tmain_kautil_range_exsits_interface() {
                     break;
                 }
             }
-        
-            
-            
             
             printf("%s | ",res==check_res?"VALID" : "!!!! INVALID");
             printf("res(%d) | %lld <= {%lld %lld} <= %lld",res,l->v,from,to,r->v);
         
-            int jjj = 0;
+
         
     }
     
