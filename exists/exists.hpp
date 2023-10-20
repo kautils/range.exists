@@ -117,8 +117,8 @@ int tmain_kautil_range_exsits_interface() {
             };
             
             // if adjust then direction is 0. 
-            i0.direction = !is_adjust_diff(i0,from,diff)*i0.direction;
-            i1.direction = !is_adjust_diff(i1,from,diff)*i1.direction;
+            i0.direction *= !is_adjust_diff(i0,from,diff);
+            i1.direction *= !is_adjust_diff(i1,from,diff);
             
             
             auto is_exact = [](auto const& i0,auto const& i1)->bool{
