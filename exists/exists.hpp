@@ -115,9 +115,13 @@ struct exists{
                 +i1_is_adjust*i1.nearest_value;
         }
 
-
-        auto i0_is_contained = (is_contained(i0)|i0_is_exact(i0));
-        auto i1_is_contained = (is_contained(i1)|i1_is_exact(i1));
+        
+        auto a = is_contained(i0);
+        auto b = i0_is_exact(i0);
+        
+        
+        auto i0_is_contained = !i0.nan*(is_contained(i0)|i0_is_exact(i0));
+        auto i1_is_contained = !i1.nan*(is_contained(i1)|i1_is_exact(i1));
         auto contained = ((from==to)&i0_is_contained)|(i0_is_contained&i1_is_contained);
         auto size_check = (sizeof(value_type)>=(-i0.nearest_pos+i1.nearest_pos));
         return contained&size_check; 
@@ -170,18 +174,31 @@ int tmain_kautil_range_exsits_interface() {
         
         
             auto diff = 1;
-            //auto from=value_type{11},to=value_type{19}; // expect true
-            //auto from=value_type{0},to=value_type{0}; // expect false
-            //auto from=value_type{0},to=value_type{5}; // expect false
-            //auto from=value_type{9},to=value_type{11}; // expect true
-            auto from=value_type{8},to=value_type{11}; // expect false
-            //auto from=value_type{10},to=value_type{10}; // expect true
-            //auto from=value_type{20},to=value_type{30}; // expect false
-            //auto from=value_type{31},to=value_type{35}; // expect true
-            //auto from=value_type{30},to=value_type{40}; // expect true
-            //auto from=value_type{45},to=value_type{46}; // expect false
-            //auto from=value_type{990},to=value_type{1000}; // expect true
-            //auto from=value_type{1000},to=value_type{1010}; // expect false
+//            point
+            auto from=value_type{0},to=value_type{0}; // expect false
+//            auto from=value_type{8},to=value_type{11}; // expect false
+//            auto from=value_type{9},to=value_type{11}; // expect true
+        
+//            two block
+//            auto from=value_type{0},to=value_type{30}; // expect false
+//            auto from=value_type{5},to=value_type{30}; // expect false
+//            auto from=value_type{9},to=value_type{30}; // expect false
+        
+//            three block
+//            auto from=value_type{0},to=value_type{50}; // expect false
+//            auto from=value_type{5},to=value_type{50}; // expect false
+//            auto from=value_type{9},to=value_type{50}; // expect false
+            
+        
+//            auto from=value_type{11},to=value_type{19}; // expect true
+//            auto from=value_type{0},to=value_type{5}; // expect false
+//            auto from=value_type{10},to=value_type{10}; // expect true
+//            auto from=value_type{20},to=value_type{30}; // expect false
+//            auto from=value_type{31},to=value_type{35}; // expect true
+//            auto from=value_type{30},to=value_type{40}; // expect true
+//            auto from=value_type{45},to=value_type{46}; // expect false
+//            auto from=value_type{990},to=value_type{1000}; // expect true
+//            auto from=value_type{1000},to=value_type{1010}; // expect false
             auto ext = kautil::range::exists{&pref};
             ext.set_diff(diff);
             auto res = ext.exec(from,to);
