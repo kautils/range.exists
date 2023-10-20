@@ -60,13 +60,16 @@ using file_syscall_16b_f_pref= file_syscall_premitive<double>;
 
 #include "kautil/algorithm/btree_search/btree_search.hpp"
 
+
+#include <set>
+
 int tmain_kautil_range_exsits_interface() {
     
     using value_type = uint64_t;
     using offset_type = long;
     auto step = 10;
     auto data = std::vector<value_type>();{
-        for(auto i = 0; i < 100; ++i){
+        for(auto i = 0; i < 100; i+=2){
              data.push_back(i*step+step);
              data.push_back(data.back()+step);
         }
@@ -110,18 +113,80 @@ int tmain_kautil_range_exsits_interface() {
             };
             auto exact = is_exact(i0,i1);
             auto contained = is_contained(i0)&is_contained(i1);
-            auto size_check = (sizeof(value_type)==(-i0.nearest_pos+i1.nearest_pos));
+            auto size_check = (sizeof(value_type)<=(-i0.nearest_pos+i1.nearest_pos));
             auto res = bool(exact+contained)&size_check; 
         
             auto i0_check_buf = value_type(0);
             auto i1_check_buf = value_type(0);
             auto i_buf_ptr = &i0_check_buf;
-            pref.read_value(i0.nearest_pos,&(i_buf_ptr=&i0_check_buf));
-            pref.read_value(i1.nearest_pos,&(i_buf_ptr=&i1_check_buf));
-            printf("%d : (from,to){%lld %lld} ansewer{%lld,%lld} \n",res,from,to,i0_check_buf,i1_check_buf);
-            int jjj = 0;
-//        }
         
+            struct check_st{ 
+                value_type v;offset_type pos; 
+                bool operator!=(check_st const & l)const{ return pos != l.pos; }
+                bool operator<(check_st const & l)const{ return pos < l.pos; }
+            };
+            auto check = std::set<check_st>{};
+            auto lmb_set_check = [](auto & check,auto & pref,auto & i0 ){
+                
+                auto is_limit_l = i0.nearest_pos<sizeof(value_type);
+                auto is_limit_r = i0.nearest_pos+2*sizeof(value_type)>(pref.size());
+                auto i0_check_buf = value_type(0);
+                auto i_buf_ptr = &i0_check_buf;
+                
+                auto l_pos = offset_type(!is_limit_l*(i0.nearest_pos-sizeof(value_type)));
+                auto r_pos = offset_type(!is_limit_r*(i0.nearest_pos+sizeof(value_type)));
+                pref.read_value(l_pos,&(i_buf_ptr=&i0_check_buf));
+                check.insert({.v=i0_check_buf,.pos=l_pos});
+                pref.read_value(offset_type(i0.nearest_pos),&(i_buf_ptr=&i0_check_buf));
+                check.insert({.v=i0_check_buf,.pos=offset_type(i0.nearest_pos)});
+                pref.read_value(r_pos,&(i_buf_ptr=&i0_check_buf));
+                check.insert({.v=i0_check_buf,.pos=r_pos});
+            };
+            
+            lmb_set_check(check,pref,i0);
+            lmb_set_check(check,pref,i1);
+
+            printf("from,to : {%lld,%lld}\n",from,to);fflush(stdout);
+            {
+                printf("related poses : ");fflush(stdout);
+                for(auto & elem : check)printf("%lld(%ld) ", elem.v, elem.pos);
+                printf("\n");
+                fflush(stdout);
+            }
+            
+            
+            auto cur = check.begin();
+            auto e = check.end();
+            auto validity = false;
+            auto l = (const check_st*)0; 
+            auto r = (const check_st*)0; 
+            for(;;){
+                l = &*cur;;
+                if(++cur==e){ break;}
+                r = &*cur;
+                if(++cur==e){ break;}
+                
+                auto is_same_block = 
+                    (from >= l->v) &(from <= r->v)
+                    &(to >= l->v) &(to <= r->v);
+            
+                if(is_same_block){
+                    printf("detected as the same block : %lld <= x <= %lld\n",l->v,r->v);fflush(stdout);
+                    auto is_even = bool(l->v%(sizeof(value_type)*2));
+                    validity=
+                         (is_same_block& is_even)& res
+                        |(is_same_block&!is_even)&!res;
+                    break;
+                }
+            }
+        
+            
+            
+            
+            printf("%s | ",validity?"VALID" : "!!!! INVALID");
+            printf("res(%d) | %lld <= {%lld %lld} <= %lld",res,l->v,from,to,r->v);
+        
+            int jjj = 0;
         
     }
     
