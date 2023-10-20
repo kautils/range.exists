@@ -60,7 +60,6 @@ using file_syscall_16b_f_pref= file_syscall_premitive<double>;
 
 #include "kautil/algorithm/btree_search/btree_search.hpp"
 
-
 #include <set>
 
 int tmain_kautil_range_exsits_interface() {
@@ -74,6 +73,7 @@ int tmain_kautil_range_exsits_interface() {
              data.push_back(data.back()+step);
         }
     }
+    
     
     
     auto f_ranges = fopen("tmain_kautil_range_exsits_interface.cache","w+b");
@@ -93,14 +93,34 @@ int tmain_kautil_range_exsits_interface() {
         srand((uintptr_t)&pref);
         
 //        for(auto i = 0; i < 1000; ++i){
+            auto diff = 1;
             auto from=value_type{10},to=value_type{20};
 //            from = (rand()%max+min)/step*step;
 //            to = (rand()%max+min)/step*step;
-            // 4 pattern
+            // there are 4 patterns (exact(2)) * (contained(2))
                 //exact
                 //contained
             auto i0 = bt.search(from,false);
             auto i1 = bt.search(to,false);
+        
+            // todo : consider nan
+            
+            
+            auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
+                /*
+                 (np-diff <= input <= np) or (np <= input <= np+diff)
+                 then adjust 
+                 */
+                return 
+                     ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
+                    +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
+            };
+            
+            // if adjust then direction is 0. 
+            i0.direction = !is_adjust_diff(i0,from,diff)*i0.direction;
+            i1.direction = !is_adjust_diff(i1,from,diff)*i1.direction;
+            
+            
             auto is_exact = [](auto const& i0,auto const& i1)->bool{
                 return
                          ((!i0.direction)&!bool(i0.nearest_pos%(sizeof(value_type)*2))) 
