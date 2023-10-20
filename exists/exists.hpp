@@ -166,13 +166,16 @@ int tmain_kautil_range_exsits_interface() {
         auto max = data.back();
         srand((uintptr_t)&pref);
         
-//        for(auto i = 0; i < 1000; ++i){
         // todo : consider nan
+        
+        
             auto diff = 1;
             //auto from=value_type{11},to=value_type{19}; // expect true
             //auto from=value_type{0},to=value_type{0}; // expect false
             //auto from=value_type{0},to=value_type{5}; // expect false
-            auto from=value_type{10},to=value_type{10}; // expect true
+            //auto from=value_type{9},to=value_type{11}; // expect true
+            auto from=value_type{8},to=value_type{11}; // expect false
+            //auto from=value_type{10},to=value_type{10}; // expect true
             //auto from=value_type{20},to=value_type{30}; // expect false
             //auto from=value_type{31},to=value_type{35}; // expect true
             //auto from=value_type{30},to=value_type{40}; // expect true
@@ -182,15 +185,34 @@ int tmain_kautil_range_exsits_interface() {
             auto ext = kautil::range::exists{&pref};
             ext.set_diff(diff);
             auto res = ext.exec(from,to);
+        
             
-//            from = (rand()%max+min)/step*step;
-//            to = (rand()%max+min)/step*step;
-            // there are 4 patterns (exact(2)) * (contained(2))
-                //exact
-                //contained
             auto i0 = bt.search(from,false);
             auto i1 = bt.search(to,false);
-        
+            auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
+                return 
+                     ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
+                    +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
+            };
+    
+                
+            {
+                // if adjust then direction is 0. 
+                auto i0_is_adjust =is_adjust_diff(i0,from,diff); 
+                i0.direction *= !i0_is_adjust;
+                from=
+                     !i0_is_adjust*from
+                    +i0_is_adjust*i0.nearest_value;
+                
+                auto i1_is_adjust =is_adjust_diff(i1,to,diff); 
+                i1.direction *= !is_adjust_diff(i1,to,diff);
+                to = 
+                     !i1_is_adjust*to
+                    +i1_is_adjust*i1.nearest_value;
+            }
+    
+
+            
             struct check_st{ 
                 value_type v;offset_type pos; 
                 bool operator!=(check_st const & l)const{ return pos != l.pos; }
