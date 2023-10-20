@@ -114,12 +114,12 @@ struct exists{
                  !i1_is_adjust*to
                 +i1_is_adjust*i1.nearest_value;
         }
-    
-        auto test0 = is_contained(i0);
-        auto test1 = is_contained(i1);
-        
-        auto contained = (is_contained(i0)|i0_is_exact(i0)) & (is_contained(i1)|i1_is_exact(i1));
-        auto size_check = (sizeof(value_type)<=(-i0.nearest_pos+i1.nearest_pos));
+
+
+        auto i0_is_contained = (is_contained(i0)|i0_is_exact(i0));
+        auto i1_is_contained = (is_contained(i1)|i1_is_exact(i1));
+        auto contained = ((from==to)&i0_is_contained)|(i0_is_contained&i1_is_contained);
+        auto size_check = (sizeof(value_type)>=(-i0.nearest_pos+i1.nearest_pos));
         return contained&size_check; 
     }
     
@@ -170,10 +170,14 @@ int tmain_kautil_range_exsits_interface() {
         // todo : consider nan
             auto diff = 1;
             //auto from=value_type{11},to=value_type{19}; // expect true
+            //auto from=value_type{0},to=value_type{0}; // expect false
             //auto from=value_type{0},to=value_type{5}; // expect false
+            auto from=value_type{10},to=value_type{10}; // expect true
             //auto from=value_type{20},to=value_type{30}; // expect false
-            auto from=value_type{31},to=value_type{35}; // expect false
-            //auto from=value_type{30},to=value_type{40}; // expect false
+            //auto from=value_type{31},to=value_type{35}; // expect true
+            //auto from=value_type{30},to=value_type{40}; // expect true
+            //auto from=value_type{45},to=value_type{46}; // expect false
+            //auto from=value_type{990},to=value_type{1000}; // expect true
             //auto from=value_type{1000},to=value_type{1010}; // expect false
             auto ext = kautil::range::exists{&pref};
             ext.set_diff(diff);
@@ -227,10 +231,9 @@ int tmain_kautil_range_exsits_interface() {
             auto l = (const check_st*)0; 
             auto r = (const check_st*)0; 
             for(;;){
-                l = &*cur;;
+                l = &*cur;
                 if(++cur==e){ break;}
                 r = &*cur;
-                if(++cur==e){ break;}
                 
                 auto is_same_block = 
                     (from >= l->v) &(from <= r->v)
