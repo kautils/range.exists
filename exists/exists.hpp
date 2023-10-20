@@ -92,9 +92,30 @@ int tmain_kautil_range_exsits_interface() {
         auto max = data.back();
         srand((uintptr_t)&pref);
         
+        auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
+            /*
+             (np-diff <= input <= np) or (np <= input <= np+diff)
+             then adjust 
+             */
+            return 
+                 ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
+                +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
+        };
+        auto i0_is_exact = [](auto const& i0)->bool{ return (!i0.direction)& !bool(i0.nearest_pos%(sizeof(value_type)*2)); };
+        auto i1_is_exact = [](auto const& i1)->bool{ return (!i1.direction)&  bool(i1.nearest_pos%(sizeof(value_type)*2)); };
+        auto is_contained = [](auto const& in)->bool{
+            return
+               (bool(in.nearest_pos%(sizeof(value_type)*2))&(in.direction<0)) 
+             | (!bool(in.nearest_pos%(sizeof(value_type)*2)))&(in.direction>0);
+        };
+
+                    
 //        for(auto i = 0; i < 1000; ++i){
+        // todo : consider nan
             auto diff = 1;
-            auto from=value_type{10},to=value_type{20};
+            auto from=value_type{12},to=value_type{20}; // expect true
+            
+            
 //            from = (rand()%max+min)/step*step;
 //            to = (rand()%max+min)/step*step;
             // there are 4 patterns (exact(2)) * (contained(2))
@@ -103,38 +124,28 @@ int tmain_kautil_range_exsits_interface() {
             auto i0 = bt.search(from,false);
             auto i1 = bt.search(to,false);
         
-            // todo : consider nan
             
+            {
+                // if adjust then direction is 0. 
+                auto i0_is_adjust =is_adjust_diff(i0,from,diff); 
+                i0.direction *= !i0_is_adjust;
+                from=
+                     !i0_is_adjust*from
+                    +i0_is_adjust*i0.nearest_value;
+                
+                auto i1_is_adjust =is_adjust_diff(i1,to,diff); 
+                i1.direction *= !is_adjust_diff(i1,to,diff);
+                to = 
+                     !i1_is_adjust*to
+                    +i1_is_adjust*i1.nearest_value;
+            }
+        
+            auto test0 = is_contained(i0);
+            auto test1 = is_contained(i1);
             
-            auto is_adjust_diff =[](auto const& i0,auto from,auto diff)->bool{
-                /*
-                 (np-diff <= input <= np) or (np <= input <= np+diff)
-                 then adjust 
-                 */
-                return 
-                     ((i0.nearest_value-diff <= from) &(from <= i0.nearest_value))
-                    +((i0.nearest_value <= from) &(from <= i0.nearest_value+diff));
-            };
-            
-            // if adjust then direction is 0. 
-            i0.direction *= !is_adjust_diff(i0,from,diff);
-            i1.direction *= !is_adjust_diff(i1,from,diff);
-            
-            
-            auto is_exact = [](auto const& i0,auto const& i1)->bool{
-                return
-                         ((!i0.direction)&!bool(i0.nearest_pos%(sizeof(value_type)*2))) 
-                        &((!i1.direction)& bool(i1.nearest_pos%(sizeof(value_type)*2)));
-            };
-            auto is_contained = [](auto const& in)->bool{
-                return 
-                    bool(in.nearest_pos%(sizeof(value_type)*2))&(in.direction<0) 
-                 + !bool(in.nearest_pos%(sizeof(value_type)*2))&(in.direction>0);
-            };
-            auto exact = is_exact(i0,i1);
-            auto contained = is_contained(i0)&is_contained(i1);
+            auto contained = (is_contained(i0)|i0_is_exact(i0)) & (is_contained(i1)|i1_is_exact(i1));
             auto size_check = (sizeof(value_type)<=(-i0.nearest_pos+i1.nearest_pos));
-            auto res = bool(exact+contained)&size_check; 
+            auto res = contained&size_check; 
         
             auto i0_check_buf = value_type(0);
             auto i1_check_buf = value_type(0);
@@ -177,7 +188,7 @@ int tmain_kautil_range_exsits_interface() {
             
             auto cur = check.begin();
             auto e = check.end();
-            auto validity = false;
+            auto check_res = false;
             auto l = (const check_st*)0; 
             auto r = (const check_st*)0; 
             for(;;){
@@ -193,7 +204,7 @@ int tmain_kautil_range_exsits_interface() {
                 if(is_same_block){
                     printf("detected as the same block : %lld <= x <= %lld\n",l->v,r->v);fflush(stdout);
                     auto is_even = bool(l->v%(sizeof(value_type)*2));
-                    validity=
+                    check_res=
                          (is_same_block& is_even)& res
                         |(is_same_block&!is_even)&!res;
                     break;
@@ -203,7 +214,7 @@ int tmain_kautil_range_exsits_interface() {
             
             
             
-            printf("%s | ",validity?"VALID" : "!!!! INVALID");
+            printf("%s | ",res==check_res?"VALID" : "!!!! INVALID");
             printf("res(%d) | %lld <= {%lld %lld} <= %lld",res,l->v,from,to,r->v);
         
             int jjj = 0;
