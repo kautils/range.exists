@@ -11,7 +11,7 @@ struct exists{
     using offset_type = typename preference_t::offset_type;
     
     exists(preference_t * pref) : pref(pref){}
-    ~exists(){}
+    virtual ~exists(){}
     
     bool exec(value_type from, value_type to){
         auto is_contained = [](auto const& in)->bool{
