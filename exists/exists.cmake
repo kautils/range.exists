@@ -28,7 +28,7 @@ string(APPEND ${m}_findpkgs
 )
 
 
-set(module_name exsits)
+set(module_name exists)
 unset(srcs)
 file(GLOB srcs ${CMAKE_CURRENT_LIST_DIR}/*.hpp)
 set(${module_name}_common_pref
