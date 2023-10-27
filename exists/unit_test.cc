@@ -111,7 +111,7 @@ int tmain_kautil_range_exsits_interface() {
 //            auto from = value_type{0},to = value_type{15}; //expect false
 //            auto from = value_type{0},to = value_type{19}; //expect false
 //            auto from = value_type{0},to = value_type{20}; //expect false
-//            auto from = value_type{10},to = value_type{20};  //expect true
+            auto from = value_type{10},to = value_type{20};  //expect true
 //            auto from = value_type{11},to = value_type{15};  //expect true
 //            auto from = value_type{9},to = value_type{15};  //expect false
 //            auto from = value_type{9},to = value_type{21};  //expect false
@@ -133,7 +133,7 @@ int tmain_kautil_range_exsits_interface() {
 //            
 //           overflow 
 //            auto from=value_type{0},to=value_type{5}; // expect false
-            auto from=value_type{1000},to=value_type{1010}; // expect false
+//            auto from=value_type{1000},to=value_type{1010}; // expect false
 
             auto ext = kautil::range::exists{&pref};
             auto res = ext.exec(from,to);
