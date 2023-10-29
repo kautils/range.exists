@@ -1,4 +1,3 @@
-
 set(${PROJECT_NAME}_m_evacu ${m})
 set(m ${PROJECT_NAME})
 list(APPEND ${m}_unsetter )
@@ -16,7 +15,7 @@ endif()
 
 
 git_clone(https://raw.githubusercontent.com/kautils/CMakeLibrarytemplate/v0.0.1/CMakeLibrarytemplate.cmake)
-git_clone(https://raw.githubusercontent.com/kautils/CMakeFetchKautilModule/v0.0.1/CMakeFetchKautilModule.cmake)
+git_clone(https://raw.githubusercontent.com/kautils/CMakeFetchKautilModule/v1.0/CMakeFetchKautilModule.cmake)
 
 
 CMakeFetchKautilModule(${m}_kautil_btree GIT https://github.com/kautils/btree_search.git REMOTE origin BRANCH v1.0)
