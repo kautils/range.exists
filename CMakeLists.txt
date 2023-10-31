@@ -1,5 +1,3 @@
-set(KAUTIL_PROJECT_SUFFIX v0.0)
-
 cmake_minimum_required(VERSION 3.20)
 set(PROJECT_VERSION 0.0.1)
 if("${KAUTIL_PROJECT_RENAME}" STREQUAL "")
