@@ -24,7 +24,7 @@ find_package(KautilAlgorithmBtreeSearch.1.0.1.interface REQUIRED)
 
 file(GLOB ${m}_range_exists ${CMAKE_CURRENT_LIST_DIR}/*.hpp)
 install(FILES ${${m}_range_exists} DESTINATION include/kautil/range/exists )
-install(SCRIPT "${${m}_kautil_btree.BUILD_DIR}/cmake_install.cmake")
+install(SCRIPT "${${${m}_kautil_btree.STRUCT_ID}.BUILD_DIR}/cmake_install.cmake")
 
 string(APPEND ${m}_findpkgs
     "if(EXISTS \"\\$\\{PACKAGE_PREFIX_DIR}/lib/cmake/KautilAlgorithmBtreeSearch.1.0.1\")\n"
@@ -32,6 +32,8 @@ string(APPEND ${m}_findpkgs
     "\t find_package(KautilAlgorithmBtreeSearch.1.0.1.interface REQUIRED)\n"
     "endif()\n"
 )
+
+
 
 
 set(module_name exists)
